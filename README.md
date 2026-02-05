@@ -93,23 +93,23 @@ This will:
 Edit `run_code.py` to customize:
 
 ```python
-# Choose metric (line 130-131)
+# Choose metric (line 141-142)
 metric = "mae"  # or "mre"
 
-# Datasets (line 100-113)
+# Datasets (line 113)
 datasets = [
     "covid19", "flu_deaths", "unemployment", 
     "cab", "tdrive", "energy",
     "high_volatility", "low_volatility", ...
 ]
 
-# Privacy budgets (line 115)
+# Privacy budgets (line 130)
 epsilon_list = [0.01, 0.1, 0.2, ..., 1.0]
 
-# Window size (line 119)
+# Window size (line 134)
 window_size = 120
 
-# Number of rounds (line 123)
+# Number of rounds (line 138)
 round_ = 3
 ```
 

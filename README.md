@@ -28,7 +28,9 @@ Mirror-Smoothing is a comprehensive differential privacy framework for continuou
 │       ├── distribution_drift_len10000dim10.csv
 │       ├── periodic_switch_len10000dim10.csv
 │       ├── sparse_spike_len10000dim10.csv
-│       └── correlated_latent_factor_len10000dim10.csv
+│       ├── correlated_latent_factor_len10000dim10.csv
+│       └── generate_synthetic_data.py     # Generate synthetic data
+
 │
 ├── methods/
 │   ├── mirror_smoothing.py       # Our proposed method
@@ -55,7 +57,24 @@ pip install numpy pandas torch matplotlib seaborn
 
 **Hardware**: GPU recommended (CUDA support) for faster computation.
 
+## Generate Synthetic Data
+```bash
+python generate_synthetic_data.py 
+```
+This will get : 
+- high_volatility_len10000dim10.csv
+- low_volatility_len10000dim10.csv
+- distribution_drift_len10000dim10.csv
+- periodic_switch_len10000dim10.csv
+- sparse_spike_len10000dim10.csv
+- correlated_latent_factor_len10000dim10.csv
+
+
+
+
 ## Quick Start
+
+
 
 ### 1. Run All Experiments
 

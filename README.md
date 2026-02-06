@@ -1,4 +1,4 @@
-# Mirror-Smoothing: Differential Privacy for Data Streams
+# Mirror-Smoothing
 
 This repository contains the implementation and experimental code for the paper **"Mirror-Smoothing: Leveraging historical data for enhanced utility in differentially private data stream release"**.
 

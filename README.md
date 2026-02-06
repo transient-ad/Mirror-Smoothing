@@ -1,4 +1,4 @@
-# Mirror-Smoothing: Differential Privacy for Data Streams
+# Mirror-Smoothing
 
 This repository contains the implementation and experimental code for the paper **"Mirror-Smoothing: Leveraging historical data for enhanced utility in differentially private data stream release"**.
 
@@ -58,10 +58,13 @@ pip install numpy pandas torch matplotlib seaborn
 **Hardware**: GPU recommended (CUDA support) for faster computation.
 
 ## Generate Synthetic Data
+
 ```bash
 python generate_synthetic_data.py 
 ```
-This will get : 
+
+This will get :
+
 - high_volatility_len10000dim10.csv
 - low_volatility_len10000dim10.csv
 - distribution_drift_len10000dim10.csv
@@ -69,12 +72,7 @@ This will get :
 - sparse_spike_len10000dim10.csv
 - correlated_latent_factor_len10000dim10.csv
 
-
-
-
 ## Quick Start
-
-
 
 ### 1. Run All Experiments
 
@@ -113,7 +111,6 @@ window_size = 120
 round_ = 3
 ```
 
-
 ## Datasets
 
 ### Real-World Datasets (6)
@@ -134,12 +131,9 @@ round_ = 3
 5. **Sparse Spike**
 6. **Correlated Latent Factor**
 
-
-
 ## License
 
 This project is licensed under the MIT License.
-
 
 ---
 

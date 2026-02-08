@@ -23,6 +23,8 @@ Three coupled mechanisms:
    - N_t = β·N_curr + (1-β)·N_prev
 """
 
+import csv
+import os
 import math
 import numpy as np
 import torch
@@ -121,7 +123,8 @@ def compute_sample_count_Q(epsilon_p, delta_p, history_windows, window_size,
     var_delta_R = torch.var(delta_R_mean, unbiased=False)
     var_delta_N = torch.var(delta_N_mean, unbiased=False)
     D = var_delta_R - var_delta_N
-    D = torch.clamp(D, min=1e-9)  # avoid non-positive due to noise/finite samples
+    # avoid non-positive due to noise/finite samples
+    D = torch.clamp(D, min=1e-9)
 
     # Q_curr = max{(ε_p/Δ_p) · sqrt(D), 1}
     Q_curr = (float(epsilon_p) / float(delta_p)) * math.sqrt(float(D.item()))
@@ -166,10 +169,11 @@ def find_first_release_in_window(eps_c_ledger, window_size):
             return t
     return current
 
-
 # ----------------------------
 # Noise-Mirror: dynamic beta
 # ----------------------------
+
+
 def compute_dynamic_beta(eps_remain, delta_p, beta_max=0.9, beta_min=0.5):
     """
     Noise-Mirror (paper equation):
@@ -206,22 +210,6 @@ def compute_error(X, R, metric="mae"):
         rel[~mask0] = abs_diff[~mask0] / denom[~mask0]
         return torch.mean(rel).item()
 
-    if metric == "sum_mae":
-        X_cum = torch.cumsum(X, dim=0)
-        R_cum = torch.cumsum(R, dim=0)
-        return torch.mean(torch.abs(X_cum - R_cum)).item()
-
-    if metric == "sum_mre":
-        X_cum = torch.cumsum(X, dim=0)
-        R_cum = torch.cumsum(R, dim=0)
-        abs_diff = torch.abs(X_cum - R_cum)
-        denom = torch.abs(X_cum)
-        mask0 = denom == 0
-        rel = torch.empty_like(abs_diff)
-        rel[mask0] = torch.abs(R_cum)[mask0]
-        rel[~mask0] = abs_diff[~mask0] / denom[~mask0]
-        return torch.mean(rel).item()
-
     raise ValueError(f"Unknown metric: {metric}")
 
 
@@ -243,8 +231,10 @@ def warm_up_stage_mirror(epsilon_p, delta_p, X, window_size, window_num, beta, d
     epsilon_warmup = float(epsilon_p) / float(c_init)
 
     dim = X.shape[1]
-    R = torch.zeros((total_for_warmup, dim), device=device, dtype=torch.float32)
-    N = torch.zeros((total_for_warmup, dim), device=device, dtype=torch.float32)
+    R = torch.zeros((total_for_warmup, dim),
+                    device=device, dtype=torch.float32)
+    N = torch.zeros((total_for_warmup, dim),
+                    device=device, dtype=torch.float32)
 
     eps_c_ledger = []   # release-consumption ledger ε_{c,t}
     svt_c_ledger = []   # SVT-consumption ledger svt_{c,t}
@@ -338,8 +328,10 @@ def mirror_smoothing_workflow(
     # Online stage
     for t in range(warm_len, T):
         # Budget-Mirror: remaining budgets in the current sliding window
-        eps_remain = compute_remaining_budget(epsilon_p, eps_c_ledger, window_size)
-        svt_remain = compute_remaining_budget(epsilon_s2, svt_c_ledger, window_size)
+        eps_remain = compute_remaining_budget(
+            epsilon_p, eps_c_ledger, window_size)
+        svt_remain = compute_remaining_budget(
+            epsilon_s2, svt_c_ledger, window_size)
 
         # Data change magnitude (mean absolute change)
         diff = torch.mean(torch.abs(X[t] - X[t - 1])).item()
@@ -354,10 +346,12 @@ def mirror_smoothing_workflow(
             device
         )[0].item()
 
-        first_release_in_window = find_first_release_in_window(eps_c_ledger, window_size)
+        first_release_in_window = find_first_release_in_window(
+            eps_c_ledger, window_size)
 
         # Decision branch 1: must publish when nearing window end (feasibility)
-        remaining_slots = max((int(window_size) - (t - first_release_in_window)), 1)
+        remaining_slots = max(
+            (int(window_size) - (t - first_release_in_window)), 1)
         budget_per_slot = epsilon_p / float(Q)
 
         if remaining_slots <= int(eps_remain / max(budget_per_slot, 1e-12)):
@@ -385,10 +379,12 @@ def mirror_smoothing_workflow(
             svt_c_ledger.append(float(svt_alloc))
 
             # Re-compute remaining SVT budget after accounting this verification
-            svt_remain_new = compute_remaining_budget(epsilon_s2, svt_c_ledger, window_size)
+            svt_remain_new = compute_remaining_budget(
+                epsilon_s2, svt_c_ledger, window_size)
 
             # Effective perturbation budget (matches your implementation)
-            eps_eff = max(float(budget_per_slot + max(float(svt_remain_new), 0.0)), 1e-12)
+            eps_eff = max(
+                float(budget_per_slot + max(float(svt_remain_new), 0.0)), 1e-12)
 
             noisy, curr_noise = add_noise_mirror_torch(
                 X[t], delta_p, eps_eff, prev_noise, beta, device
@@ -413,7 +409,8 @@ def mirror_smoothing_workflow(
         )
 
         # Noise-Mirror: update beta
-        beta = compute_dynamic_beta(eps_remain, delta_p, beta_max=beta_max, beta_min=beta_min)
+        beta = compute_dynamic_beta(
+            eps_remain, delta_p, beta_max=beta_max, beta_min=beta_min)
 
     err = compute_error(X, R, metric=metric)
     R_list = R.detach().cpu().numpy().tolist()
@@ -466,7 +463,7 @@ def run_mirror_smoothing_gpu(
 #     # 1. Create output directory (create if not exists)
 #     output_dir = "output_ablation_study"
 #     os.makedirs(output_dir, exist_ok=True)
-    
+
 #     # 2. Initialize experiment configurations
 #     set_seed(42)
 #     device = get_device()
@@ -490,18 +487,18 @@ def run_mirror_smoothing_gpu(
 
 #     # 3. Define result file path
 #     result_file = os.path.join(output_dir, "window_size_ablation_results.csv")
-    
+
 
 #     with open(result_file, "w", newline="", encoding="utf-8") as f:
 #         writer = csv.writer(f)
 #         # Write header first
 #         writer.writerow(["dataset", "window_size", "metric", "error", "device", "seed"])
-        
+
 #         # Nested for loops: traverse datasets → window sizes (more structured)
 #         for ds in datasets:
 #             print(f"\nProcessing dataset: {ds}")
 #             raw_stream = data_reader(ds)
-            
+
 #             # Inner loop: traverse all window sizes for ablation study
 #             for window_size in window_sizes:
 #                 # Run experiment for current window size
@@ -511,10 +508,10 @@ def run_mirror_smoothing_gpu(
 #                     windownum_warm, windownum_updateQ,
 #                     rounds, beta0=0.7, gamma=gamma, metric=metric, device=device
 #                 )
-#                 error = float(error_list[0]) 
+#                 error = float(error_list[0])
 #                 # Print real-time result
 #                 print(f"  Window size {window_size} | {metric}: {error:.4f}")
-                
+
 #                 # Write result to CSV (single writer, no repeated open/close)
 #                 writer.writerow([ds, window_size, metric, round(error, 4), str(device), 42])
 
@@ -524,16 +521,9 @@ def run_mirror_smoothing_gpu(
 # --------------------------------------------------------------------------------------------------------------
 
 
-
-
-
-
-
 # --------------------------------------------------------------------------------------------------------------
 # ablation study gamma
 # --------------------------------------------------------------------------------------------------------------
-import os
-import csv
 
 if __name__ == "__main__":
     # 1. Create output directory (create if not exists)
@@ -559,14 +549,15 @@ if __name__ == "__main__":
     windownum_updateQ = 2
     rounds = 3
     metric = "mre"
-    window_size = 120  # 
+    window_size = 120  #
 
     # 3. Define result file path
     result_file = os.path.join(output_dir, "gamma_ablation_results.csv")
 
     with open(result_file, "w", newline="", encoding="utf-8") as f:
         writer = csv.writer(f)
-        writer.writerow(["dataset", "gamma", "window_size", "epsilon", "metric", "error", "device", "seed"])
+        writer.writerow(["dataset", "gamma", "window_size",
+                        "epsilon", "metric", "error", "device", "seed"])
 
         for ds in datasets:
             print(f"\nProcessing dataset: {ds}")
@@ -581,14 +572,16 @@ if __name__ == "__main__":
                 )
                 error = float(error_list[0])  # epsilon_list只有一个值
 
-                print(f"  gamma {gamma:.1f} | window {window_size} | eps {epsilon_list[0]} | {metric}: {error:.4f}")
+                print(
+                    f"  gamma {gamma:.1f} | window {window_size} | eps {epsilon_list[0]} | {metric}: {error:.4f}")
 
                 writer.writerow([
                     ds, gamma, window_size, epsilon_list[0],
                     metric, round(error, 4), str(device), 42
                 ])
 
-    print(f"\nAll experimental results saved to: {os.path.abspath(result_file)}")
+    print(
+        f"\nAll experimental results saved to: {os.path.abspath(result_file)}")
 # --------------------------------------------------------------------------------------------------------------
 # ablation study gamma
 # --------------------------------------------------------------------------------------------------------------

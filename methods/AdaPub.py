@@ -152,14 +152,6 @@ def compute_error(raw_tensor, pub_tensor, metric="mae", query_num=100):
         return point_mae(raw_tensor, pub_tensor)
     if m == "mre":
         return point_mre(raw_tensor, pub_tensor)
-    if m == "sum_mae":
-        return sum_query_metric(raw_tensor, pub_tensor, query_num=query_num, metric="mae")
-    if m == "sum_mre":
-        return sum_query_metric(raw_tensor, pub_tensor, query_num=query_num, metric="mre")
-    if m == "count_mae":
-        return count_query_metric(raw_tensor, pub_tensor, query_num=query_num, metric="mae")
-    if m == "count_mre":
-        return count_query_metric(raw_tensor, pub_tensor, query_num=query_num, metric="mre")
     raise ValueError(
         "metric must be one of: mae/mre/sum_mae/sum_mre/count_mae/count_mre")
 

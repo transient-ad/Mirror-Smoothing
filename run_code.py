@@ -13,6 +13,10 @@ Testing Methods:
 6. DPI
 7. PeGaSus
 8. AdaPub
+9. DSAT
+10. Fast
+11. SPPA
+12. NANO
 
 Testing multiple epsilon values: 0.01, 0.1, 0.2, ..., 1.0
 Results are saved to CSV files in a "wide" format:
@@ -60,7 +64,6 @@ print(f"Device: {device}")
 # ----------------------------
 class _NullWriter:
     """A minimal stdout sink to silence verbose methods."""
-
     def write(self, _):
         pass
 
@@ -73,7 +76,6 @@ class silence_stdout:
     Context manager to temporarily silence stdout safely.
     Always restores stdout even if exceptions happen.
     """
-
     def __enter__(self):
         self._old = sys.stdout
         sys.stdout = _NullWriter()
@@ -109,22 +111,27 @@ def run_method_safely(method_name: str, fn, *args, **kwargs):
 # ----------------------------
 # Benchmark configuration
 
+# 01 real-world datasets
+# "covid19", "Flu_Deaths", "unemp", "ilinet", "footmart", "nation", "tdv", "retail"
+
+# 02 synthetic_datasets
+# "high_volatility", "low_volatility", "distribution_drift", "periodic_switch", "sparse_spike", "correlated_latent_factor"
+
 # ----------------------------
 datasets = [
     # 01 real-world datasets
-    "covid19",
-    "flu_deaths",
-    "unemployment",
-    "cab"
-    "tdrive",
+    "taxi",
+    "covid19", 
     "energy",
+    "Flu_Deaths", 
+    "unemp", 
+    # "ilinet", 
+    # "footmart", 
+    # "nation", 
+    "tdv", 
+    # "retail",
     # 02 synthetic_datasets
-    "high_volatility",
-    "low_volatility",
-    "distribution_drift",
-    "periodic_switch",
-    "sparse_spike",
-    "correlated_latent_factor"
+    "high_volatility", "low_volatility", "distribution_drift", "periodic_switch", "sparse_spike", "correlated_latent_factor"
 ]
 
 epsilon_list = [0.01, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
@@ -136,20 +143,21 @@ windownum_warm = 1
 windownum_updateE = 2
 windownum_updateQ = 2
 round_ = 3
-
-# -----------------You can choose MAE or MRE by commenting on the following 2 lines---------
-# metric = "mre"
 metric = "mae"
 
 METHODS = [
-    "Mirror-Smoothing",
-    "SPAS",
-    "Naive",
-    "BucOrder",
-    "CompOrder",
-    "DPI",
-    "PeGaSus",
-    "AdaPub",
+    # "Mirror-Smoothing",
+    # "SPAS",
+    # "Naive",
+    # "BucOrder",
+    # "CompOrder",
+    # "DPI",
+    # "PeGaSus",
+    # "AdaPub",
+    "DSAT",
+    "Fast",
+    "SPPA",
+    "NANO",
 ]
 
 # Create output directory: ./output/<yy.mm.dd>/
@@ -165,8 +173,199 @@ print("-" * 80)
 
 
 # ----------------------------
+# Method registry
+# Each active method must define:
+#   import_module, import_name, run_kwargs (mapping of kwargs loaded after import)
+# Edit only the METHODS list above to toggle methods on/off.
+# ----------------------------
+METHOD_REGISTRY = {
+    "Mirror-Smoothing": {
+        "module": "methods.mirror_smoothing",
+        "function": "run_mirror_smoothing_gpu",
+        "kwargs": dict(
+            epsilon_list=epsilon_list,
+            delta_s=sensitivity_s,
+            delta_p=sensitivity_p,
+            raw_stream=None,          # placeholder, filled per dataset
+            window_size=window_size,
+            windownum_warm=windownum_warm,
+            windownum_updateQ=windownum_updateQ,
+            rounds=round_,
+            beta0=0.7,
+            gamma=0.7,
+            metric=metric,
+            device=device,
+        ),
+    },
+    "SPAS": {
+        "module": "methods.SPAS",
+        "function": "run_SPAS_gpu",
+        "kwargs": dict(
+            epsilon_list=epsilon_list,
+            sensitivity_s=sensitivity_s,
+            sensitivity_p=sensitivity_p,
+            raw_stream=None,
+            window_size=window_size,
+            windownum_warm=windownum_warm,
+            windownum_updateE=windownum_updateE,
+            round_=round_,
+            metric=metric,
+            device=device,
+        ),
+    },
+    "Naive": {
+        "module": "methods.Naive",
+        "function": "run_naive_gpu",
+        "kwargs": dict(
+            epsilon_list=epsilon_list,
+            sensitivity=sensitivity_p,
+            raw_stream=None,
+            window_size=window_size,
+            round_=round_,
+            metric=metric,
+            device=device,
+        ),
+    },
+    "BucOrder": {
+        "module": "methods.BucOrder",
+        "function": "run_bucorder_gpu",
+        "kwargs": dict(
+            epsilon_list=epsilon_list,
+            sensitivity=sensitivity_p,
+            raw_stream=None,
+            delay_time=window_size,
+            buc_size=100,
+            round_=round_,
+            metric=metric,
+            device=device,
+        ),
+    },
+    "CompOrder": {
+        "module": "methods.CompOrder",
+        "function": "run_comporder_gpu",
+        "kwargs": dict(
+            epsilon_list=epsilon_list,
+            sensitivity=sensitivity_p,
+            raw_stream=None,
+            delay_time=10,
+            round_=round_,
+            metric=metric,
+            device=device,
+            verbose=False,
+        ),
+    },
+    "DPI": {
+        "module": "methods.DPI",
+        "function": "run_dpi_gpu",
+        "kwargs": dict(
+            epsilon_list=epsilon_list,
+            raw_stream=None,
+            round_=round_,
+            metric=metric,
+            device=device,
+            verbose=False,
+        ),
+    },
+    "PeGaSus": {
+        "module": "methods.PeGaSus",
+        "function": "run_pegasus_gpu",
+        "kwargs": dict(
+            epsilon_list=epsilon_list,
+            sensitivity=sensitivity_p,
+            raw_stream=None,
+            window_size=window_size,
+            round_=round_,
+            metric=metric,
+            device=device,
+        ),
+    },
+    "AdaPub": {
+        "module": "methods.AdaPub",
+        "function": "run_adapub_gpu",
+        "kwargs": dict(
+            epsilon_list=epsilon_list,
+            sensitivity=sensitivity_p,
+            raw_stream=None,
+            window_size=window_size,
+            round_=round_,
+            metric=metric,
+            device=device,
+        ),
+    },
+    "DSAT": {
+        "module": "methods.dsat",
+        "function": "run_dsat_gpu",
+        "kwargs": dict(
+            epsilon_list=epsilon_list,
+            sensitivity=sensitivity_p,
+            raw_stream=None,
+            window_size=window_size,
+            round_=round_,
+            metric=metric,
+            device=device,
+        ),
+    },
+    "Fast": {
+        "module": "methods.fast_w_event",
+        "function": "run_fast_gpu",
+        "kwargs": dict(
+            epsilon_list=epsilon_list,
+            sensitivity=sensitivity_p,
+            raw_stream=None,
+            window_size=window_size,
+            round_=round_,
+            metric=metric,
+            device=device,
+        ),
+    },
+    "SPPA": {
+        "module": "methods.sppa",
+        "function": "run_sppa_gpu",
+        "kwargs": dict(
+            epsilon_list=epsilon_list,
+            sensitivity=sensitivity_p,
+            raw_stream=None,
+            window_size=window_size,
+            round_=round_,
+            metric=metric,
+            device=device,
+            tau=1.0,          # time sensitivity τ = Ts (paper Sec 5.2)
+            Ts=1.0,            # sampling period
+        ),
+    },
+    "NANO": {
+        "module": "methods.nano",
+        "function": "run_nano_gpu",
+        "kwargs": dict(
+            epsilon_list=epsilon_list,
+            sensitivity=sensitivity_p,
+            raw_stream=None,
+            window_size=window_size,
+            round_=round_,
+            metric=metric,
+            device=device,
+            eta=0.001,         # CUD weight-fluctuation threshold (paper: 0.001)
+            mix_alpha=0.5,     # MixTD noise mixing parameter (paper: 0.5)
+        ),
+    },
+}
+
+
+def _resolve_method(method_name):
+    """Lazy-import a method function from the registry. Returns (fn, kwargs_template)."""
+    import importlib
+
+    info = METHOD_REGISTRY[method_name]
+    mod = importlib.import_module(info["module"])
+    fn = getattr(mod, info["function"])
+    return fn, info["kwargs"]
+
+
+# ----------------------------
 # Main loop
 # ----------------------------
+total_methods = len(METHODS)
+
 for ds_idx, ds in enumerate(datasets, start=1):
     print(f"\n{'='*80}")
     print(f"Dataset [{ds_idx}/{len(datasets)}]: {ds}")
@@ -179,173 +378,48 @@ for ds_idx, ds in enumerate(datasets, start=1):
         data_dim = len(raw_stream[0]) if raw_stream else 0
         print(f"Data length: {data_length}, Dimension: {data_dim}")
     except Exception as e:
-        print(f"Error: Failed to read dataset '{ds}': {e}")
+        print(f"❌ Failed to read dataset '{ds}': {e}")
         continue
 
-    # Import methods once per dataset
-    from methods.mirror_smoothing import run_mirror_smoothing_gpu
-    from methods.SPAS import run_SPAS_gpu
-    from methods.Naive import run_naive_gpu
-    from methods.BucOrder import run_bucorder_gpu
-    from methods.CompOrder import run_comporder_gpu
-    from methods.DPI import run_dpi_gpu
-    from methods.PeGaSus import run_pegasus_gpu
-    from methods.AdaPub import run_adapub_gpu
+    # Run only the methods listed in METHODS, in order
+    results_map = {}  # method_name -> error_list (or NaN list on failure)
 
-    # 1) Mirror-Smoothing
-    print("  [1/8] Mirror-Smoothing...", end="", flush=True)
-    err_mirror, t_mirror, st_mirror = run_method_safely(
-        "Mirror-Smoothing",
-        run_mirror_smoothing_gpu,
-        epsilon_list=epsilon_list,
-        delta_s=sensitivity_s,
-        delta_p=sensitivity_p,
-        raw_stream=raw_stream,
-        window_size=window_size,
-        windownum_warm=windownum_warm,
-        windownum_updateQ=windownum_updateQ,
-        rounds=round_,
-        beta0=0.7,
-        gamma=0.7,
-        metric=metric,
-        device=device,
-    )
-    print(f"OK! ({t_mirror:.1f}s)" if st_mirror ==
-          "Success" else f" ❌ {st_mirror}")
+    for idx, method_name in enumerate(METHODS, start=1):
+        if method_name not in METHOD_REGISTRY:
+            print(f"  [{idx}/{total_methods}] {method_name}... ❌ Unknown method — not in registry")
+            results_map[method_name] = [float("nan")] * len(epsilon_list)
+            continue
 
-    # 2) SPAS
-    print("  [2/8] SPAS...", end="", flush=True)
-    err_spas, t_spas, st_spas = run_method_safely(
-        "SPAS",
-        run_SPAS_gpu,
-        epsilon_list=epsilon_list,
-        sensitivity_s=sensitivity_s,
-        sensitivity_p=sensitivity_p,
-        raw_stream=raw_stream,
-        window_size=window_size,
-        windownum_warm=windownum_warm,
-        windownum_updateE=windownum_updateE,
-        round_=round_,
-        metric=metric,
-        device=device,
-    )
-    print(f" OK! ({t_spas:.1f}s)" if st_spas == "Success" else f" ❌ {st_spas}")
+        print(f"  [{idx}/{total_methods}] {method_name}...", end="", flush=True)
 
-    # 3) Naive
-    print("  [3/8] Naive...", end="", flush=True)
-    err_naive, t_naive, st_naive = run_method_safely(
-        "Naive",
-        run_naive_gpu,
-        epsilon_list=epsilon_list,
-        sensitivity=sensitivity_p,
-        raw_stream=raw_stream,
-        window_size=window_size,
-        round_=round_,
-        metric=metric,
-        device=device,
-    )
-    print(f" OK! ({t_naive:.1f}s)" if st_naive ==
-          "Success" else f" ❌ {st_naive}")
+        fn, kwargs_template = _resolve_method(method_name)
+        kwargs = {**kwargs_template, "raw_stream": raw_stream}
 
-    # 4) BucOrder
-    print("  [4/8] BucOrder...", end="", flush=True)
-    err_buc, t_buc, st_buc = run_method_safely(
-        "BucOrder",
-        run_bucorder_gpu,
-        epsilon_list=epsilon_list,
-        sensitivity=sensitivity_p,
-        raw_stream=raw_stream,
-        delay_time=window_size,
-        buc_size=100,
-        round_=round_,
-        metric=metric,
-        device=device,
-    )
-    print(f" OK! ({t_buc:.1f}s)" if st_buc == "Success" else f" ❌ {st_buc}")
+        err_list, elapsed, status = run_method_safely(method_name, fn, **kwargs)
+        results_map[method_name] = err_list
 
-    # 5) CompOrder
-    print("  [5/8] CompOrder...", end="", flush=True)
-    err_comp, t_comp, st_comp = run_method_safely(
-        "CompOrder",
-        run_comporder_gpu,
-        epsilon_list=epsilon_list,
-        sensitivity=sensitivity_p,
-        raw_stream=raw_stream,
-        delay_time=10,
-        round_=round_,
-        metric=metric,
-        device=device,
-        verbose=False,
-    )
-    print(f" OK! ({t_comp:.1f}s)" if st_comp == "Success" else f" ❌ {st_comp}")
-
-    # 6) DPI
-    print("  [6/8] DPI...", end="", flush=True)
-    err_dpi, t_dpi, st_dpi = run_method_safely(
-        "DPI",
-        run_dpi_gpu,
-        epsilon_list=epsilon_list,
-        raw_stream=raw_stream,
-        round_=round_,
-        metric=metric,
-        device=device,
-        verbose=False,
-    )
-    print(f" OK! ({t_dpi:.1f}s)" if st_dpi == "Success" else f" ❌ {st_dpi}")
-
-    # 7) PeGaSus
-    print("  [7/8] PeGaSus...", end="", flush=True)
-    err_pg, t_pg, st_pg = run_method_safely(
-        "PeGaSus",
-        run_pegasus_gpu,
-        epsilon_list=epsilon_list,
-        sensitivity=sensitivity_p,
-        raw_stream=raw_stream,
-        window_size=window_size,
-        round_=round_,
-        metric=metric,
-        device=device,
-    )
-    print(f" OK! ({t_pg:.1f}s)" if st_pg == "Success" else f" ❌ {st_pg}")
-
-    # 8) AdaPub
-    print("  [8/8] AdaPub...", end="", flush=True)
-    err_ap, t_ap, st_ap = run_method_safely(
-        "AdaPub",
-        run_adapub_gpu,
-        epsilon_list=epsilon_list,
-        sensitivity=sensitivity_p,
-        raw_stream=raw_stream,
-        window_size=window_size,
-        round_=round_,
-        metric=metric,
-        device=device,
-    )
-    print(f" OK! ({t_ap:.1f}s)" if st_ap == "Success" else f" ❌ {st_ap}")
+        print(f" ✅ ({elapsed:.1f}s)" if status == "Success" else f" ❌ {status}")
 
     # ----------------------------
     # Save results in wide format (one row per epsilon)
+    # Columns are built dynamically from METHODS order
     # ----------------------------
-    results_df = pd.DataFrame({
+    results_data = {
         "dataset": [ds] * len(epsilon_list),
         "epsilon": epsilon_list,
         "window_size": [window_size] * len(epsilon_list),
-        "Mirror-Smoothing": err_mirror,
-        "SPAS": err_spas,
-        "Naive": err_naive,
-        "BucOrder": err_buc,
-        "CompOrder": err_comp,
-        "DPI": err_dpi,
-        "PeGaSus": err_pg,
-        "AdaPub": err_ap,
-    })
+    }
+    for method_name in METHODS:
+        results_data[method_name] = results_map[method_name]
+
+    results_df = pd.DataFrame(results_data)
 
     dataset_dir = os.path.join(output_dir, ds)
     os.makedirs(dataset_dir, exist_ok=True)
     csv_path = os.path.join(dataset_dir, f"results_{ds}.csv")
     results_df.to_csv(csv_path, index=False)
 
-    print(f"  OK! Results saved: {csv_path}")
+    print(f"  ✅ Results saved: {csv_path}")
 
 print(f"\n{'='*80}")
 print(f"All tests finished. Results saved under: {output_dir}")

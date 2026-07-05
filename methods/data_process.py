@@ -63,31 +63,60 @@ def data_reader(name: str):
             "path": "./dataset/real_world_datasets/COVID_19_Deaths.csv",
             "skip": 2, "col_idx": -1, "as_float": True
         },
-        "unemployment": {
+        "unemp": {
             "path": "./dataset/real_world_datasets/Unemployment.csv",
             "skip": 2, "col_idx": -1, "as_float": False
         },
-        "cab": {
+        "ilinet": {
+            "path": "./dataset/real_world_datasets/ILINet.csv",
+            "skip": 2, "col_idx": -1, "as_float": True
+        },
+        "footmart": {
+            "path": "./dataset/real_world_datasets/footmart.csv",
+            "skip": 0, "col_idx": -1, "as_float": True
+        },
+
+        "nation": {
+            "path": "./dataset/real_world_datasets/National_Custom_Data.csv",
+            "skip": 1, "col_idx": -1, "as_float": True
+        },
+        "taxi": {
             "path": "./dataset/real_world_datasets/Cab_Industry.csv",
             "skip": 0, "col_idx": -1, "as_float": True
         },
+
         "flu_deaths": {
             "path": "./dataset/real_world_datasets/Flu_Deaths.csv",
             "skip": 2, "col_idx": -6, "as_float": True
         },
-        "tdrive": {
+
+        "tdv": {
             "path": "./dataset/real_world_datasets/td_output.csv",
             "skip": 2, "as_float": False
         },
+        "retail": {
+            "path": "./dataset/real_world_datasets/retail_output.csv",
+            "skip": 1, "as_float": False
+        },
         "energy": {
             "path": "./dataset/real_world_datasets/energydata.csv",
+            "skip": 1, "as_float": False
+        },
+        "tetuan": {
+            "path": "./dataset/real_world_datasets/Tetuan_City_power_consumption.csv",
+            "skip": 1, "as_float": False
+        },
+        "steel": {
+            "path": "./dataset/real_world_datasets/Steel_industry_data.csv",
             "skip": 1, "as_float": False
         },
     }
 
     # Multi-dimensional real-world datasets that should read ALL columns
     real_world_multidim = {
-        "tdrive": real_world_datasets["tdrive"],
+        "tdv": real_world_datasets["tdv"],
+        "retail": real_world_datasets["retail"],
+        
     }
 
     # If requested dataset is a multi-D real dataset
@@ -124,7 +153,7 @@ def data_reader(name: str):
             "path": "./dataset/synthetic_datasets/sparse_spike_len10000dim10.csv",
             "skip": 1, "as_float": True
         },
-        "latent_factor": {
+        "correlated_latent_factor": {
             "path": "./dataset/synthetic_datasets/correlated_latent_factor_len10000dim10.csv",
             "skip": 1, "as_float": True
         },

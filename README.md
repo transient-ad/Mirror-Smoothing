@@ -41,6 +41,10 @@ Mirror-Smoothing is a comprehensive differential privacy framework for continuou
 │   ├── DPI.py                    # Baseline: DPI
 │   ├── PeGaSus.py                # Baseline: PeGaSus
 │   ├── AdaPub.py                 # Baseline: AdaPub
+│   ├── sppa.py                 # Baseline: SPPA
+│   ├── nano.py                 # Baseline: NANO
+│   ├── dsat.py                 # Baseline: DSAT
+│   ├── fast_w_event.py                 # Baseline: FAST
 │   └── data_process.py           # Data loading utilities
 │
 ├── output_mae/                   # MAE experimental results
@@ -82,7 +86,7 @@ python run_code.py
 
 This will:
 
-- Test 8 methods on 12 datasets
+- Test 12 methods on 12 datasets
 - Vary epsilon from 0.01 to 1.0
 - Save results to `./output_mae/<date>/` or `./output_mre/<date>/`
 
@@ -91,23 +95,23 @@ This will:
 Edit `run_code.py` to customize:
 
 ```python
-# Choose metric (line 141-142)
+# Choose metric 
 metric = "mae"  # or "mre"
 
-# Datasets (line 113)
+# Datasets 
 datasets = [
     "covid19", "flu_deaths", "unemployment", 
     "cab", "tdrive", "energy",
     "high_volatility", "low_volatility", ...
 ]
 
-# Privacy budgets (line 130)
+# Privacy budgets 
 epsilon_list = [0.01, 0.1, 0.2, ..., 1.0]
 
-# Window size (line 134)
+# Window size 
 window_size = 120
 
-# Number of rounds (line 138)
+# Number of rounds 
 round_ = 3
 ```
 

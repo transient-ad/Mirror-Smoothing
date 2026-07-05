@@ -41,10 +41,10 @@ Mirror-Smoothing is a comprehensive differential privacy framework for continuou
 │   ├── DPI.py                    # Baseline: DPI
 │   ├── PeGaSus.py                # Baseline: PeGaSus
 │   ├── AdaPub.py                 # Baseline: AdaPub
-│   ├── sppa.py                 # Baseline: SPPA
-│   ├── nano.py                 # Baseline: NANO
-│   ├── dsat.py                 # Baseline: DSAT
-│   ├── fast_w_event.py                 # Baseline: FAST
+│   ├── sppa.py                   # Baseline: SPPA
+│   ├── nano.py                   # Baseline: NANO
+│   ├── dsat.py                   # Baseline: DSAT
+│   ├── fast_w_event.py           # Baseline: FAST
 │   └── data_process.py           # Data loading utilities
 │
 ├── output_mae/                   # MAE experimental results
